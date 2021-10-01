@@ -1,0 +1,305 @@
+---
+title: "Introduction to R"
+tutorial:
+  id: "com.example.tutorials.my-first-tutorial"
+  version: 0.7
+output: 
+  learnr::tutorial:
+    progressive: true
+  html_document:
+      toc: TRUE
+runtime: shiny_prerendered
+---
+
+```{r, include=F}
+knitr::opts_chunk$set(echo = FALSE)
+library(learnr)
+library(lubridate)
+library(RCurl)
+library(reshape2)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+```
+
+```{r import, include=FALSE}
+# Any object created here will be available in global environment. Any objects created within excercise chunks are only available within the chunk
+
+# x <- getURL("https://raw.githubusercontent.com/weinbergerlab/Brazil_state/master/prelog_Brazil_state_processed_data.csv")
+#ds1<-read.csv("https://raw.githubusercontent.com/weinbergerlab/Brazil_state/master/prelog_Brazil_state_processed_data.csv")
+#saveRDS(ds1,'./Data/brazil_hosp.rds')
+
+ds3a <- read_excel('./Data/Expt1.xlsx',skip=19)
+ds3c <- read_excel('./Data/Expt3.xlsx',skip=19)
+
+ds3 <- bind_rows(ds3a, ds3c)
+
+piab <- ds3[ds3$`Biological Set Name` == 'piaB' & ds3$Content=='Std',] #Subset the data to just piaB standards
+
+piab$dilutions <- as.numeric(piab$Sample)*-1 # Switch sign on the standard so it runs from 1 - 5
+
+reg1 <- lm(Cq~dilutions,data=piab)  #Fits a linear regression Y=Cq value; X=dilution
+
+
+```
+
+
+# Introduction to R
+In this tutorial, we will learn how to manipulate and plot data in R.
+
+## Let's start by looking at some real data
+
+These are qPCR data, which were originally saved as an Excel file and imported into R.
+
+
+The data are stored in R as a *data frame*, with 7 columns and 48 rows
+
+If you ever want to just see the full data table use View()
+
+```{r br11, exercise=TRUE, exercise.eval=FALSE}
+View(ds3)
+```
+
+
+```{r br1a, exercise=TRUE, exercise.eval=FALSE}
+head(ds3) # View first 6 rows of data
+```
+
+```{r br1b, exercise=TRUE, exercise.eval=FALSE}
+dimnames(ds3) # See names of the rows and columns
+```
+
+```{r br1c, exercise=TRUE, exercise.eval=FALSE}
+str(ds3) # Tells you the structure of the object--what type of variables are in there, dimensions, etc
+```
+
+```{r br1d, exercise=TRUE, exercise.eval=FALSE}
+dim(ds3) # Get the dimensions of the  data
+```
+
+## Working with vectors and matrices
+
+In R you can work with individual numbers (ie calculate value of 1+1) with vectors of numbers (ie a variable), or with matrices. Data can also be stored in 'data frames' which is like a matrix but that can store a mix of numeric variables and character variables.
+
+First, let's extract two of the columns from the data
+
+R uses matrix notation to refer to positions in the data: [ROW,COLUMN]
+
+Here, let's extract the Well and Cq columns and save it to a new data frame called ds4. If we want all rows we leave a blank space before the commas. 
+Try to modify this code to extract additional variables
+
+```{r vectormaker, exercise=TRUE, exercise.eval=FALSE}
+ds4 <- ds3[ ,c('Well','Cq')] # Creates vector named 'state31'
+head(ds4)
+```
+
+Now let's say we just want rows that have a standard. This finds rows where Content='Std'. Note that we use a double == sign to test for equality.
+
+```{r well1, exercise=TRUE, exercise.eval=FALSE}
+ds4 <- ds3[ ds3$Content=='Std', c('Well','Cq')] 
+head(ds4)
+```
+
+We can also refer to rows and columns by number. Columns 1 and 7 in ds3 are Well and Cq; rows 44-48 are the Standard
+
+```{r well2, exercise=TRUE, exercise.eval=FALSE}
+ds4 <- ds3[ 44:48, c(1,7)] 
+head(ds4)
+```
+
+## Arithmetic in R
+
+First, R can be used like a calculator 
+```{r calc,  exercise=TRUE, exercise.eval=FALSE}
+
+Result <- 1 + 1
+print(Result)
+```
+
+```{r calc2,  exercise=TRUE, exercise.eval=FALSE}
+
+Result <- 20  / 5
+print(Result)
+```
+
+
+Let's say we want to take our Ct values and shift the scale by an arbitrary number. Here we will subtract 10 from the Ct values
+```{r shift10,  exercise=TRUE, exercise.eval=FALSE}
+
+ds3$Cq_shift <- ds3$Cq - 10
+head(ds3)
+```
+
+
+We could also calculate the minimum Ct value across all samples and subtract that from the Ct. 
+The min() function calculates the minimum value of the variable Cq. na.rm=T means we want to calculate the minimum Ct, excluding the missing (NA) values
+
+```{r shiftmin,  exercise=TRUE, exercise.eval=FALSE}
+ds3$Cq_shift <- ds3$Cq - min(ds3$Cq, na.rm=T)
+head(ds3)
+```
+
+And we can calculate statistics about the data. For examples, let's calculate the mean Ct values. Again na.rm removes the missing values from the calculation (otherwise it will return a missing value as the answer)
+```{r c1,  exercise=TRUE, exercise.eval=FALSE}
+mean.ct<- mean(ds3$Cq, na.rm=T)
+print(mean.ct)
+      
+```
+
+
+But instead, we might want to calculate the mean only among the unknowns (excluding the Standards)
+
+We could create a new version of the dataset that excludes the standards (keep all columns, and rows where Sample is not equal to 'Std'. To do not equal in R we use '!=' )
+```{r c2,  exercise=TRUE, exercise.eval=FALSE}
+ds4 <- ds3[ds3$Content != 'Std', ]
+mean(ds4$Cq, na.rm=T)
+
+```
+
+
+```{r c3,  exercise=TRUE, exercise.eval=FALSE}
+mean.ct<- mean(ds3$Cq[ds3$Content != 'Std'], na.rm=T)
+print(mean.ct)
+```
+
+
+And if we wanted to, we could subtract the mean Ct value from the original
+
+```{r c4,  exercise=TRUE, exercise.eval=FALSE}
+mean.ct<- mean(ds3$Cq[ds3$Content != 'Std'], na.rm=T)
+
+ds3$Ct.mean.shift <- ds3$Cq - mean.ct
+
+head(ds3)
+
+```
+
+
+
+## Making useful plots
+
+Let's plot the standards
+
+```{r plot1, exercise=TRUE, exercise.eval=FALSE}
+
+piab <- ds3[ds3$`Biological Set Name` == 'piaB' & ds3$Content=='Std',] #Subset the data to just piaB standards
+
+piab$dilutions <- as.numeric(piab$Sample)*-1 # Switch sign on the standard so it runs from 1 - 5
+
+reg1 <- lm(Cq~dilutions,data=piab)  #Fits a linear regression Y=Cq value; X=dilution
+
+r2 <- round(summary(reg1)$r.squared ,2) #Extract R2 from the regression, round to 2 decimals
+
+
+ggplot(piab, aes(x=dilutions, y=Cq)) + #Define the dataset used ('piab') and the x and y variable names
+  geom_point() +  #Adds the points
+  geom_smooth(method=lm) +  #Adds regression line
+  geom_text(x=1, y=35,label=paste('R2=',r2) )  #Adds the labels
+```
+
+### Now let's make the plot look nicer by changing some plot options
+
+Turn off the right and top borders (bty='l'), add x and y axis labels (xlab and ylab), change the color of the line (col=), and line width (lwd)
+
+```{r plot2, exercise=TRUE, exercise.eval=FALSE}
+r2 <- round(summary(reg1)$r.squared ,2) #Extract R2 from the regression, round to 2 decimals
+
+ggplot(piab, aes(x=dilutions, y=Cq)) + #Define the dataset used ('piab') and the x and y variable names
+  geom_point(shape=16, col='blue') +  #Adds the points
+  geom_smooth(method=lm,linetype="dashed", color='darkred', se=F) +  #Adds regression line
+  geom_text(x=1, y=35,label=paste('R2=',r2) )  +#Adds the labels
+  theme_classic() #turns off the ugly gray background and gridlines
+```
+
+
+
+## Writing Functions
+
+We might want to perform certain custom operations. We can do this by writing and then running functions.
+
+As a silly example, let's provide the function with 2 numbers and add them together. 
+
+We will create a function call 'my.fun1'. This function has 2 inputs 'a' and 'b'. We will supply numeric values for a and b, which are added together and stored as 'z'. Then it will return z
+
+```{r makefun, exercise=TRUE, exercise.eval=FALSE}
+
+my.fun1 <- function(a,b){
+  z <- a + b
+  return(z)
+}
+
+```
+
+Now run the function. Change the input values of a and b and see what happens
+```{r fun2,exercise=T, exercise.eval=FALSE}
+#Define the function
+my.fun1 <- function(a,b){
+  z <- a + b
+  return(z)
+}
+
+#Call the function
+res1 <- my.fun1(a=1, b=1)
+print(res1)
+```
+
+### Now something a bit more useful
+
+Let's take the code we used above for extracting the piaB standard and plotting the curve, and make it more generic so that you could run it for lytA OR piaB without having to copy and paste the whole code. We can wrap the code in a function, and include as variables in the function things we want to be able to change, like the 'biological set name'
+
+We will call this function 'std.curve.fun', and it will have a variable that can be used inside it called 'targetname. 
+```{r, echo=T}
+
+std.curve.fun <- function(targetname){
+  ds.sub <- ds3[ds3$`Biological Set Name` == targetname & ds3$Content=='Std',] #Subset the data to just piaB standards
+  
+  ds.sub$dilutions <- as.numeric(ds.sub$Sample)*-1 # Switch sign on the standard so it runs from 1 - 5
+  
+  reg1 <- lm(Cq~dilutions,data=ds.sub)  #Fits a linear regression Y=Cq value; X=dilution
+  
+  r2 <- round(summary(reg1)$r.squared ,2) #Extract R2 from the regression, round to 2 decimals
+  
+p1 <-ggplot(ds.sub, aes(x=dilutions, y=Cq)) + #Define the dataset used ('piab') and the x and y variable names
+  geom_point(shape=16, col='blue') +  #Adds the points
+  geom_smooth(method=lm,linetype="dashed", color='darkred', se=F) +  #Adds regression line
+  geom_text(x=2, y=35,label=paste(targetname,' R2=',r2) )  +#Adds the labels
+  theme_classic() +#turns off the ugly gray background and gridlines
+  scale_x_continuous(limits = c(1,5)) + #Set x axis limits
+  scale_y_continuous(limits = c(18, 40)) #set y axis limits
+
+
+return(p1) #output of the function
+}
+```
+
+We can then call this with a single line . Try changing this to 'piaB'
+
+```{r, fun3,exercise=T, exercise.eval=FALSE}
+ std.curve.fun('lyta')
+```
+
+Or we can use lapply() to do generate a set of graphs at once and then arrange them
+
+```{r fun4,exercise=T, exercise.eval=FALSE}
+
+targets <- c('piaB', 'lyta')
+
+all.plots <- lapply(targets , std.curve.fun)
+
+all.plots[[1]] | all.plots[[2]] #Using the vertical line assembles the 2 plots next to each other
+
+all.plots[[1]] / all.plots[[2]] #Using the dash assembles the 2 plots above each other
+
+```
+
+
+
+
+
+
+
+
+## RStudio
+
+Now let's go to RStudio and get familiar with the interface and learn how to set the working directory, and how to install and load packages.
