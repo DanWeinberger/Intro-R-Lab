@@ -91,6 +91,49 @@ all.files <- bind_rows(all.files.list)
 View(all.files)
 ```
 
+## Dealing with messy data
+
+In this example, some of the labels were placed in the wrong column, and a mi of capital and lowercase were used
+
+```{r}
+d1 <- read_excel('./Data/Expt1_messy.xlsx', skip=19)
+View(d1)
+```
+
+move all the labels into correct column
+```{r}
+
+d1$`Biological Set Name`[is.na(d1$`Biological Set Name`)] <- d1$Target[is.na(d1$`Biological Set Name`)]
+```
+
+See all the variants of the probe name. We can see there is a mix of capital and lower case. and some subscrpts mixed in
+
+```{r}
+
+table(d1$`Biological Set Name`)
+```
+
+First let's deal with the subscripts. We can remove "_" with gsub() which will substitute "_" with "" (nothing)
+```{r}
+d1$`Biological Set Name` <- gsub('_', #thing we want to substitute out
+                                 '',  #thing we want to substitute in
+                                 d1$`Biological Set Name`) #variable we want to change
+```
+
+Now let's make everything lowercase. We can dothis with the toower funtion
+```{r}
+d1$`Biological Set Name`  <- tolower(d1$`Biological Set Name` )
+```
+
+Check your work
+```{r}
+table(d1$`Biological Set Name`)
+
+```
+
+```{r}
+View(d1)
+```
 
 
 
