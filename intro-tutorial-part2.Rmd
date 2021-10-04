@@ -1,0 +1,96 @@
+---
+title: "Intro-tutrial-Part2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+## Loading packages
+
+When using R, we can use packages to help with our work. For example, there is a package for importing MS Excel files called readxl. The first time you use it, you need to install it on your computer using `{r install.packages('readxl')}`
+
+After that, you can load the packages. using a library statement. After that, you can use the functions
+
+```{r}
+library(readxl)
+```
+
+## Structuring your project and data
+
+We are currently using an R *Project*. Projects provide a way to organize your code and data. Notice how I have structured this project. On the main root directory, we have the .rproj file, which can be used to open the project, and We have an Rmd file, which is a notebook that can include code and text. Then I have folders that contain data and R code. The R folder can be used for longer pieces of code that we don't want in our notebook (we read in that code using source() )
+
+## Import your data
+
+We have 3 Excel files, all with the same structure. The first 19 rows have meta data that we don't care about, and the 20th row is where the data start including the header.
+
+We use the read_excel function from the readxl package and tell it to skip the first 19 rows. We will save the data frame as 'a1'. We will also add a column called 'expt' that will tell us which experiment this is from
+```{r}
+a1 <- read_excel('./Data/Expt1.xlsx', skip=19)
+a1$expt=1
+```
+
+```{r}
+View(a1)
+```
+
+We could then do the same thing for a2 and concatenate them together
+
+```{r}
+a2 <- read_excel('./Data/Expt2.xlsx', skip=19)
+a2$expt =2
+```
+
+Bind_rows() combines them together
+```{r}
+b1 <- bind_rows(a1, a2)
+```
+
+```{r}
+View(b1)
+```
+
+## Do this more efficiently with a function
+
+We could paste strings together to create the file path
+```{r}
+file1 <- 'Expt1'
+filepath <- paste0('./Data/', file1, '.xlsx')
+filepath
+```
+
+We then create a function that just plops in the file name into the correct slot, runs the import statement, adds the experiment label, and outputs the dataset
+```{r}
+import.func <- function(filename){
+  filepath <- paste0('./Data/', filename, '.xlsx')
+  ds <-read_excel(filepath, skip=19)
+  ds$expt = filename
+  return(ds)
+}
+```
+
+Create a vector of all the file names
+```{r}
+file.names <- c('Expt1', 'Expt2','Expt3')
+file.names
+```
+
+These are imported and stored in a list as 3 separate data frame
+```{r}
+ all.files.list <- lapply(file.names, import.func)
+```
+
+Then use bind_rows to plop them all together
+```{r}
+all.files <- bind_rows(all.files.list)
+```
+
+```{r}
+View(all.files)
+```
+
+
+
+
