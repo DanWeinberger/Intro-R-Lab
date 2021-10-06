@@ -11,7 +11,7 @@ output:
 runtime: shiny_prerendered
 ---
 
-```{r setup2, include=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(learnr)
 library(lubridate)
@@ -49,7 +49,6 @@ In this tutorial, we will learn how to manipulate and plot data in R.
 ## Let's start by looking at some real data
 
 These are qPCR data, which were originally saved as an Excel file and imported into R.
-
 
 The data are stored in R as a *data frame*, with 7 columns and 48 rows
 
