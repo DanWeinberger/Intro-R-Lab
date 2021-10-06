@@ -39,6 +39,26 @@ piab$dilutions <- as.numeric(piab$Sample)*-1 # Switch sign on the standard so it
 
 reg1 <- lm(Cq~dilutions,data=piab)  #Fits a linear regression Y=Cq value; X=dilution
 
+std.curve.fun <- function(targetname){
+  ds.sub <- ds3[ds3$`Biological Set Name` == targetname & ds3$Content=='Std',] #Subset the data to just piaB standards
+  
+  ds.sub$dilutions <- as.numeric(ds.sub$Sample)*-1 # Switch sign on the standard so it runs from 1 - 5
+  
+  reg1 <- lm(Cq~dilutions,data=ds.sub)  #Fits a linear regression Y=Cq value; X=dilution
+  
+  r2 <- round(summary(reg1)$r.squared ,2) #Extract R2 from the regression, round to 2 decimals
+  
+p1 <-ggplot(ds.sub, aes(x=dilutions, y=Cq)) + #Define the dataset used ('piab') and the x and y variable names
+  geom_point(shape=16, col='blue') +  #Adds the points
+  geom_smooth(method=lm,linetype="dashed", color='darkred', se=F) +  #Adds regression line
+  geom_text(x=2, y=35,label=paste(targetname,' R2=',r2) )  +#Adds the labels
+  theme_classic() +#turns off the ugly gray background and gridlines
+  scale_x_continuous(limits = c(1,5)) + #Set x axis limits
+  scale_y_continuous(limits = c(18, 40)) #set y axis limits
+
+
+return(p1) #output of the function
+}
 ```
 
 
@@ -52,12 +72,6 @@ These are qPCR data, which were originally saved as an Excel file and imported i
 
 
 The data are stored in R as a *data frame*, with 7 columns and 48 rows
-
-If you ever want to just see the full data table use View()
-
-```{r br11, exercise=TRUE, exercise.eval=FALSE}
-View(ds3)
-```
 
 
 ```{r br1a, exercise=TRUE, exercise.eval=FALSE}
