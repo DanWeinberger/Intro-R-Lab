@@ -41,10 +41,6 @@ reg1 <- lm(Cq~dilutions,data=piab)  #Fits a linear regression Y=Cq value; X=dilu
 
 ```
 
-```{r import, include=FALSE}
-
-
-```
 
 
 # Introduction to R
@@ -92,7 +88,7 @@ Here, let's extract the Well and Cq columns and save it to a new data frame call
 Try to modify this code to extract additional variables
 
 ```{r vectormaker, exercise=TRUE, exercise.eval=FALSE}
-ds4 <- ds3[ ,c('Well','Cq')] # Creates vector named 'state31'
+ds4 <- ds3[ ,c('Well','Cq')] 
 head(ds4)
 ```
 
