@@ -11,7 +11,7 @@ output:
 runtime: shiny_prerendered
 ---
 
-```{r, include=F}
+```{r setup2, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(learnr)
 library(lubridate)
@@ -21,9 +21,7 @@ library(readxl)
 library(ggplot2)
 library(dplyr)
 library(patchwork)
-```
 
-```{r import, include=FALSE}
 # Any object created here will be available in global environment. Any objects created within excercise chunks are only available within the chunk
 
 # x <- getURL("https://raw.githubusercontent.com/weinbergerlab/Brazil_state/master/prelog_Brazil_state_processed_data.csv")
@@ -40,6 +38,10 @@ piab <- ds3[ds3$`Biological Set Name` == 'piaB' & ds3$Content=='Std',] #Subset t
 piab$dilutions <- as.numeric(piab$Sample)*-1 # Switch sign on the standard so it runs from 1 - 5
 
 reg1 <- lm(Cq~dilutions,data=piab)  #Fits a linear regression Y=Cq value; X=dilution
+
+```
+
+```{r import, include=FALSE}
 
 
 ```
