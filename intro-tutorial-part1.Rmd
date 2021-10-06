@@ -41,10 +41,6 @@ reg1 <- lm(Cq~dilutions,data=piab)  #Fits a linear regression Y=Cq value; X=dilu
 
 ```
 
-```{r import, include=FALSE}
-
-
-```
 
 
 # Introduction to R
